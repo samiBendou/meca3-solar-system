@@ -1,0 +1,31 @@
+{
+  "name": "meca3-solar-system",
+  "version": "1.0.0",
+  "description": "Demo app for meca3 representing the solar system",
+  "main": "index.js",
+  "scripts": {
+    "launch": "webpack serve --env entry=./dist/index.js"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "@types/stats": "^0.16.30",
+    "stats.js": "^0.17.0",
+    "three": "^0.105.2",
+    "meca3": "../meca3",
+    "meca3-examples": "../meca3/examples"
+  },
+  "devDependencies": {
+    "@webpack-cli/generators": "^2.4.2",
+    "copy-webpack-plugin": "^10.2.4",
+    "css-loader": "^6.7.1",
+    "html-webpack-plugin": "^5.5.0",
+    "mini-css-extract-plugin": "^2.6.0",
+    "prettier": "^2.6.1",
+    "style-loader": "^3.3.1",
+    "typescript": "^3.5.3",
+    "webpack": "^5.70.0",
+    "webpack-cli": "^4.9.2",
+    "webpack-dev-server": "^4.7.4",
+    "workbox-webpack-plugin": "^6.5.2"
+  }
+}
