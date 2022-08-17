@@ -232,7 +232,7 @@ const gravitationalAcceleration: SystemAcceleration = (p, point) => {
 
 let zoomScale = 1;
 const settings = new Settings({
-  scale: 1e-9,
+  scale: 1e-12,
   speed: SECS_PER_MONTH / TARGET_FRAMERATE,
   samples: SAMPLE_PER_FRAMES,
 });
@@ -248,7 +248,7 @@ function init() {
   const { spheres, lines } = initBodiesMesh([data.barycenter, ...data.points]);
   const frame = initFrameMesh();
   const { renderer, scene } = initScene(...spheres, ...lines, ...frame);
-  const camera = initCamera(scale, 0, 0, 50e9);
+  const camera = initCamera(scale, 0, 0, 50e12);
   const controls = initControls(points, settings, camera);
   const dom = initSettingsDom();
 
@@ -269,3 +269,4 @@ function init() {
 
 const animate = init();
 animate();
+
