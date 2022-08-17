@@ -37,10 +37,10 @@ export default class Orbit {
       value: orbit.inclination.value * RAD_DEG,
       argument: orbit.inclination.argument * RAD_DEG,
     };
-    this.semiMajor = 0.5 * orbit.apoapsis + orbit.periapsis;
+    this.semiMajor = 0.5 * (orbit.apoapsis + orbit.periapsis);
     this.semiMinor = Math.sqrt(orbit.apoapsis * orbit.periapsis);
     this.eccentricity =
-      (orbit.apoapsis + orbit.periapsis) / (this.semiMajor + this.semiMajor) ||
+      (orbit.apoapsis - orbit.periapsis) / (orbit.apoapsis + orbit.periapsis) ||
       0;
     this.isDegenerated =
       this.semiMinor < Number.EPSILON || this.semiMajor < Number.EPSILON;
@@ -86,3 +86,4 @@ export default class Orbit {
     return rotationNode.prodv(rotationInclination.prodv(direction));
   };
 }
+
