@@ -1,10 +1,4 @@
-import {
-  Matrix3,
-  PointConstructor,
-  SystemAcceleration,
-  Vector3,
-  Vector6,
-} from "meca3";
+import { PointConstructor, SystemAcceleration, Vector3, Vector6 } from "meca3";
 import {
   Body,
   Color,
@@ -23,6 +17,7 @@ import {
   updateSettingsDom,
   updateSimulation,
 } from "meca3-examples";
+import Orbit, { OrbitConstructor } from "./Orbit";
 
 const BUFFER_LENGTH = 8192;
 const SAMPLE_PER_FRAMES = 8192;
@@ -31,26 +26,13 @@ const TARGET_FRAMERATE = 60;
 const SECS_PER_MONTH = 2.628e6;
 const GRAVITATIONAL_CONSTANT = -6.67408e-11;
 
-const RAD_DEG = Math.PI / 180;
-
-type Orbit = {
-  mu: number;
-  apoapsis: number;
-  periapsis: number;
-  argument: number;
-  inclination: {
-    value: number;
-    argument: number;
-  };
-};
-
 type OrbitalBody = {
   name: string;
   kind: "Star" | "Terrestrial" | "Giant";
   mass: number;
   radius: number;
   color: string;
-  orbit: Orbit;
+  orbit: OrbitConstructor;
 };
 
 const orbits: OrbitalBody[] = [
@@ -209,84 +191,12 @@ const orbits: OrbitalBody[] = [
   },
 ];
 
-const semiMajor = (orbit: Orbit): number => {
-  return 0.5 * orbit.apoapsis + orbit.periapsis;
-};
-
-const semiMinor = (orbit: Orbit): number => {
-  return Math.sqrt(orbit.apoapsis * orbit.periapsis);
-};
-
-const eccentricity = (orbit: Orbit): number => {
-  const total = orbit.apoapsis + orbit.periapsis;
-  if (total > 0) {
-    return (orbit.apoapsis - orbit.periapsis) / total;
-  } else {
-    return 0;
-  }
-};
-
-const isDegenerated = (orbit: Orbit): boolean => {
-  return semiMinor(orbit) < Number.EPSILON || semiMajor(orbit) < Number.EPSILON;
-};
-
-const radiusAt =
-  (trueAnomaly: number) =>
-  (orbit: Orbit): number => {
-    const sm = semiMajor(orbit);
-    const epsilon = eccentricity(orbit);
-    return (
-      (sm * (1 - epsilon * epsilon)) / (1 + epsilon * Math.cos(trueAnomaly))
-    );
-  };
-
-const flightAngleAt =
-  (trueAnomaly: number) =>
-  (orbit: Orbit): number => {
-    const epsilon = eccentricity(orbit);
-    const ec = epsilon * Math.cos(trueAnomaly);
-    return Math.acos(
-      Math.min(1, (1 + ec) / Math.sqrt(1 + epsilon * epsilon + 2 * ec))
-    );
-  };
-
-const positionAt =
-  (trueAnomaly: number) =>
-  (orbit: Orbit): Vector3 => {
-    const argument = orbit.inclination.argument * RAD_DEG;
-    const value = orbit.inclination.value * RAD_DEG;
-    const mag = radiusAt(trueAnomaly)(orbit);
-    const nodeAxis = Vector3.ex.rotZ(argument);
-    const rotationNode = Matrix3.rot(nodeAxis, value);
-    const rotationInclination = Matrix3.rotZ(orbit.argument * RAD_DEG);
-    const direction = Vector3.ex.mul(mag).rotZ(trueAnomaly);
-    return rotationNode.prodv(rotationInclination.prodv(direction));
-  };
-
-const speedAt =
-  (trueAnomaly: number) =>
-  (orbit: Orbit): Vector3 => {
-    if (isDegenerated(orbit)) {
-      return Vector3.zeros;
-    }
-    const argument = orbit.inclination.argument * RAD_DEG;
-    const value = orbit.inclination.value * RAD_DEG;
-    const mag = Math.sqrt(
-      orbit.mu * (2 / radiusAt(trueAnomaly)(orbit) - 1 / semiMajor(orbit))
-    );
-    const phi = trueAnomaly + Math.PI / 2 - flightAngleAt(trueAnomaly)(orbit);
-    const nodeAxis = Vector3.ex.rotZ(argument);
-    const rotationNode = Matrix3.rot(nodeAxis, value);
-    const rotationInclination = Matrix3.rotZ(orbit.argument * RAD_DEG);
-    const direction = Vector3.ex.mul(mag).rotZ(phi);
-    return rotationNode.prodv(rotationInclination.prodv(direction));
-  };
-
 const initOrbitBody =
   (trueAnomaly: number) =>
   (body: OrbitalBody): Body & PointConstructor => {
-    const position = positionAt(trueAnomaly)(body.orbit);
-    const speed = speedAt(trueAnomaly)(body.orbit);
+    const orbit = new Orbit(body.orbit);
+    const position = orbit.positionAt(trueAnomaly);
+    const speed = orbit.speedAt(trueAnomaly);
     return {
       id: body.name,
       radius: 10,
