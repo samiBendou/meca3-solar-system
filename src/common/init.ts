@@ -11,12 +11,14 @@ import {
 } from "meca3";
 import Stats from "stats.js";
 import * as THREE from "three";
+import { Mesh } from "three";
 import {
   Axis,
   AXIS_COLORS,
   AXIS_MAX_LENGTH,
   AXIS_UNIT_LENGTH,
   AXIS_UNIT_SIDE,
+  Color,
 } from "./constants";
 import OrbitControls from "./controls";
 import {
@@ -78,6 +80,12 @@ export function initPointSimulation(
   return { points, solver, barycenter };
 }
 
+export const initLight = (): THREE.PointLight => {
+  const color = Color.White;
+  const intensity = 1;
+  return new THREE.PointLight(color, intensity, 10e30, 1000);
+};
+
 export function initUnitMesh(axis: Axis) {
   const [w, h, d] = coordinatesFromAxis(axis, AXIS_UNIT_LENGTH, AXIS_UNIT_SIDE);
   const geometry = new THREE.BoxGeometry(w, h, d);
@@ -121,20 +129,28 @@ export function initAxesMesh(axes?: Axis[]) {
 export function initSphereMesh(point: Body) {
   const { radius, color } = point;
   const geometry = new THREE.SphereGeometry(radius, 16, 32);
-  const material = new THREE.MeshBasicMaterial({ color });
+  const material = new THREE.MeshLambertMaterial({
+    color,
+  });
   return new THREE.Mesh(geometry, material);
 }
 
 export function initLineMesh(point: Body) {
-  const { color, trajectoryLength } = point;
-  const geometry = new THREE.Geometry();
-  const material = new THREE.LineBasicMaterial({
-    color,
-  });
-  geometry.vertices = new Array(trajectoryLength)
-    .fill(undefined)
-    .map(() => new THREE.Vector3(0, 0, 0));
-  return new THREE.Line(geometry, material);
+  const { color, radius, trajectoryLength } = point;
+  const geometry = new THREE.PlaneGeometry(radius / 5);
+
+  const meshes = new Array(trajectoryLength).fill(undefined).map(
+    (_, idx) =>
+      new THREE.Mesh(
+        geometry.clone(),
+        new THREE.MeshBasicMaterial({
+          color,
+          opacity: (idx + 1) / trajectoryLength,
+          transparent: true,
+        })
+      )
+  );
+  return meshes;
 }
 
 export function initBodiesMesh(points: Body[]) {
@@ -198,3 +214,4 @@ export function initCamera(scale: number, x: number, y: number, z: number) {
 
   return camera;
 }
+

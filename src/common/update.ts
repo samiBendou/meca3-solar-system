@@ -1,6 +1,6 @@
 import { Barycenter, Point, Solver, Timer } from "meca3";
 import * as THREE from "three";
-import { OrthographicCamera } from "three";
+import { Object3D, OrthographicCamera } from "three";
 import { Duration, UnitPrefix, UNIT_MAP } from "./constants";
 import Settings, { Frame } from "./settings";
 import { SettingsDom } from "./types";
@@ -98,10 +98,25 @@ export function updateSimulation<T>(
   barycenter.update(points);
 }
 
-export function updateSpheresMesh(
+export function updateLightObject<T extends Object3D>(
+  idx: number,
   points: Point[],
   barycenter: Barycenter,
-  spheres: THREE.Mesh[],
+  object: T,
+  settings: Settings
+) {
+  const frame = framePosition(settings.frame, points, barycenter);
+  const position = points[idx].position.xyz;
+  object.position
+    .set(...position)
+    .sub(frame)
+    .multiplyScalar(settings.scale);
+}
+
+export function updateSpheresObject<T extends Object3D>(
+  points: Point[],
+  barycenter: Barycenter,
+  spheres: T[],
   settings: Settings
 ) {
   // updating spheres position in sphere according to current position of points in field
@@ -115,29 +130,26 @@ export function updateSpheresMesh(
   });
 }
 
-export function updateLinesMesh(
+export function updateLinesObject<T extends Object3D>(
   points: Point[],
   barycenter: Barycenter,
-  lines: THREE.Line[],
+  lines: T[][],
   settings: Settings
 ) {
   const frame = frameTrajectory(settings.frame, points, barycenter);
   const zero = new THREE.Vector3(0, 0, 0);
   [barycenter, ...points].forEach((point, idx) => {
-    const geometry = lines[idx].geometry as THREE.Geometry;
+    const line = lines[idx];
     const trajectory = point.trajectory;
-    geometry.vertices.forEach((vertex, vIdx) => {
+    line.forEach((vertex, vIdx) => {
       const position = trajectory.get(vIdx).xyz;
       const pos =
         frame === null ? zero : new THREE.Vector3(...frame.get(vIdx).xyz);
-      vertex
+      vertex.position
         .set(...position)
         .sub(pos)
         .multiplyScalar(settings.scale);
     });
-    geometry.verticesNeedUpdate = true;
-    geometry.normalsNeedUpdate = true;
-    lines[idx].computeLineDistances();
   });
 }
 
@@ -172,3 +184,4 @@ export function updateSettingsDom(
   const { value, unit } = makeUnit(200 / settings.scale);
   dom.scale.innerText = `${value.toPrecision(4)} ${unit}m`;
 }
+
