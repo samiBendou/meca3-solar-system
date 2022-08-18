@@ -3,6 +3,7 @@ import {
   Body,
   Color,
   initAxesMesh,
+  initBodiesMesh,
   initCamera,
   initControls,
   initScene,
@@ -15,10 +16,9 @@ import {
   updateSettingsDom,
   updateSimulation,
   updateSpheresMesh,
-} from "meca3-examples";
+} from "./common";
 import * as THREE from "three";
 import orbits, { OrbitalBody } from "./data";
-import { initBodiesMesh } from "./init";
 import Orbit from "./Orbit";
 
 const BUFFER_LENGTH = 8192;
