@@ -2,22 +2,23 @@ import { PointConstructor, SystemAcceleration, Vector3, Vector6 } from "meca3";
 import {
   Body,
   Color,
-  initBodiesMesh,
+  initAxesMesh,
   initCamera,
   initControls,
-  initFrameMesh,
   initScene,
   initSettingsDom,
   initStats,
   initSystemSimulation,
   Settings,
-  updateObjectFrame,
-  updateObjectLines,
-  updateObjectSpheres,
+  updateAxesMesh,
+  updateLinesMesh,
   updateSettingsDom,
   updateSimulation,
+  updateSpheresMesh,
 } from "meca3-examples";
+import * as THREE from "three";
 import orbits, { OrbitalBody } from "./data";
+import { initBodiesMesh } from "./init";
 import Orbit from "./Orbit";
 
 const BUFFER_LENGTH = 8192;
@@ -42,6 +43,12 @@ const initOrbitBody =
       state: Vector6.concatenated(position, speed),
     };
   };
+
+const initLight = (): THREE.PointLight => {
+  const color = Color.White;
+  const intensity = 1;
+  return new THREE.PointLight(color, intensity, 10e12, 1000);
+};
 
 const data = {
   barycenter: {
@@ -68,7 +75,7 @@ const gravitationalAcceleration: SystemAcceleration = (p, point) => {
 
 let zoomScale = 1;
 const settings = new Settings({
-  scale: 1e-10,
+  scale: 1e-9,
   speed: SECS_PER_MONTH / TARGET_FRAMERATE,
   samples: SAMPLE_PER_FRAMES,
 });
@@ -82,19 +89,20 @@ function init() {
     settings
   );
   const { spheres, lines } = initBodiesMesh([data.barycenter, ...data.points]);
-  const frame = initFrameMesh();
-  const { renderer, scene } = initScene(...spheres, ...lines, ...frame);
-  const camera = initCamera(scale, 0, 0, 1e12);
+  const axes = initAxesMesh();
+  const light = initLight();
+  const { renderer, scene } = initScene(light, ...spheres, ...lines, ...axes);
+  const camera = initCamera(scale, 0, 0, 1e9);
   const controls = initControls(points, settings, camera);
   const dom = initSettingsDom();
 
   return function animate() {
     stats.begin();
     updateSimulation(points, barycenter, solver, settings);
-    updateObjectSpheres(points, barycenter, spheres, settings);
-    updateObjectLines(points, barycenter, lines, settings);
+    updateSpheresMesh(points, barycenter, spheres, settings);
+    updateLinesMesh(points, barycenter, lines, settings);
     updateSettingsDom(dom, settings, points, barycenter, solver.timer);
-    zoomScale = updateObjectFrame(camera, frame, zoomScale);
+    zoomScale = updateAxesMesh(camera, axes, zoomScale);
     controls.update();
     renderer.setSize(window.outerWidth, window.outerHeight);
     renderer.render(scene, camera);
