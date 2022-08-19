@@ -80,11 +80,15 @@ export function initPointSimulation(
   return { points, solver, barycenter };
 }
 
-export const initLight = (): THREE.PointLight => {
+export function initLight(point: Body, sphere: THREE.Mesh): THREE.PointLight {
   const color = Color.White;
   const intensity = 1;
+  console.log(sphere);
+  (sphere.material as THREE.MeshLambertMaterial).emissive = new THREE.Color(
+    point.color
+  );
   return new THREE.PointLight(color, intensity, 10e30, 1000);
-};
+}
 
 export function initUnitMesh(axis: Axis) {
   const [w, h, d] = coordinatesFromAxis(axis, AXIS_UNIT_LENGTH, AXIS_UNIT_SIDE);
@@ -131,6 +135,8 @@ export function initSphereMesh(point: Body) {
   const geometry = new THREE.SphereGeometry(radius, 16, 32);
   const material = new THREE.MeshLambertMaterial({
     color,
+    polygonOffset: true,
+    polygonOffsetFactor: 1,
   });
   return new THREE.Mesh(geometry, material);
 }

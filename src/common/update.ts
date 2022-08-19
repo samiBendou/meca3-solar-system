@@ -1,6 +1,6 @@
 import { Barycenter, Point, Solver, Timer } from "meca3";
 import * as THREE from "three";
-import { Object3D, OrthographicCamera } from "three";
+import { Object3D, OrthographicCamera, Vector3 } from "three";
 import { Duration, UnitPrefix, UNIT_MAP } from "./constants";
 import Settings, { Frame } from "./settings";
 import { SettingsDom } from "./types";
@@ -117,13 +117,16 @@ export function updateSpheresObject<T extends Object3D>(
   points: Point[],
   barycenter: Barycenter,
   spheres: T[],
-  settings: Settings
+  settings: Settings,
+  camera: THREE.OrthographicCamera
 ) {
   // updating spheres position in sphere according to current position of points in field
   const frame = framePosition(settings.frame, points, barycenter);
+  const cameraPos = camera.position.clone().multiplyScalar(1 / settings.scale);
   [barycenter, ...points].forEach((point, idx) => {
+    const sphere = spheres[idx];
     const position = point.position.xyz;
-    spheres[idx].position
+    sphere.position
       .set(...position)
       .sub(frame)
       .multiplyScalar(settings.scale);

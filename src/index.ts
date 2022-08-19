@@ -19,7 +19,6 @@ import {
   updateSimulation,
   updateSpheresObject,
 } from "./common";
-import * as THREE from "three";
 import orbits, { OrbitalBody } from "./data";
 import Orbit from "./Orbit";
 
@@ -71,7 +70,7 @@ const gravitationalAcceleration: SystemAcceleration = (p, point) => {
 
 let zoomScale = 1;
 const settings = new Settings({
-  scale: 1e-9,
+  scale: 1e-12,
   speed: SECS_PER_MONTH / TARGET_FRAMERATE,
   samples: SAMPLE_PER_FRAMES,
 });
@@ -84,16 +83,16 @@ function init() {
     gravitationalAcceleration,
     settings
   );
-  const { spheres, lines } = initBodiesMesh([data.barycenter, ...data.points]);
   const axes = initAxesMesh();
-  const light = initLight();
+  const { spheres, lines } = initBodiesMesh([data.barycenter, ...data.points]);
+  const light = initLight(data.points[0], spheres[1]);
   const { renderer, scene } = initScene(
     light,
     ...spheres,
     ...lines.flat(1),
     ...axes
   );
-  const camera = initCamera(scale, 0, 0, 1e9);
+  const camera = initCamera(scale, 0, 0, 1e12);
   const controls = initControls(points, settings, camera);
   const dom = initSettingsDom();
 
@@ -102,7 +101,7 @@ function init() {
     updateSimulation(points, barycenter, solver, settings);
     updateLightObject(0, points, barycenter, light, settings);
     updateLinesObject(points, barycenter, lines, settings);
-    updateSpheresObject(points, barycenter, spheres, settings);
+    updateSpheresObject(points, barycenter, spheres, settings, camera);
     updateSettingsDom(dom, settings, points, barycenter, solver.timer);
     zoomScale = updateAxesMesh(camera, axes, zoomScale);
     controls.update();
