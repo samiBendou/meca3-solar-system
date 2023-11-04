@@ -11,13 +11,12 @@ import {
 } from "meca3";
 import Stats from "stats.js";
 import * as THREE from "three";
-import { Mesh } from "three";
 import {
-  Axis,
   AXIS_COLORS,
   AXIS_MAX_LENGTH,
   AXIS_UNIT_LENGTH,
   AXIS_UNIT_SIDE,
+  Axis,
   Color,
 } from "./constants";
 import OrbitControls from "./controls";
@@ -82,12 +81,10 @@ export function initPointSimulation(
 
 export function initLight(point: Body, sphere: THREE.Mesh): THREE.PointLight {
   const color = Color.White;
-  const intensity = 1;
-  console.log(sphere);
-  (sphere.material as THREE.MeshLambertMaterial).emissive = new THREE.Color(
-    point.color
-  );
-  return new THREE.PointLight(color, intensity, 10e30, 1000);
+  const intensity = 2;
+  const light = new THREE.PointLight(color, intensity, 0, 0);
+  light.add(sphere);
+  return light;
 }
 
 export function initUnitMesh(axis: Axis) {
@@ -133,17 +130,22 @@ export function initAxesMesh(axes?: Axis[]) {
 export function initSphereMesh(point: Body) {
   const { radius, color } = point;
   const geometry = new THREE.SphereGeometry(radius, 16, 32);
-  const material = new THREE.MeshLambertMaterial({
-    color,
-    polygonOffset: true,
-    polygonOffsetFactor: 1,
-  });
+  const material = !point.isEmissive
+    ? new THREE.MeshLambertMaterial({
+        color,
+      })
+    : new THREE.MeshLambertMaterial({
+        color,
+        emissive: color,
+        emissiveIntensity: 1,
+      });
+
   return new THREE.Mesh(geometry, material);
 }
 
 export function initLineMesh(point: Body) {
   const { color, radius, trajectoryLength } = point;
-  const geometry = new THREE.PlaneGeometry(radius / 5);
+  const geometry = new THREE.CylinderGeometry(radius / 6, radius / 6, 20);
 
   const meshes = new Array(trajectoryLength).fill(undefined).map(
     (_, idx) =>
@@ -151,8 +153,8 @@ export function initLineMesh(point: Body) {
         geometry.clone(),
         new THREE.MeshBasicMaterial({
           color,
-          opacity: (idx + 1) / trajectoryLength,
           transparent: true,
+          opacity: (0.7 * (idx + 1)) / trajectoryLength,
         })
       )
   );
@@ -162,15 +164,17 @@ export function initLineMesh(point: Body) {
 export function initBodiesMesh(points: Body[]) {
   const spheres = points.map((p) => initSphereMesh(p));
   const lines = points.map((p) => initLineMesh(p));
-  return { spheres, lines };
+  const lights = points.map((p, idx) => initLight(p, spheres[idx]));
+  return { spheres, lines, lights };
 }
 
 export function initScene(...objects: THREE.Object3D[]) {
   const scene = new THREE.Scene();
-  const renderer = new THREE.WebGLRenderer();
-
+  const renderer = new THREE.WebGLRenderer({
+    antialias: true,
+  });
   scene.add(...objects);
-
+  scene.background = new THREE.Color(0x111111);
   document.body.appendChild(renderer.domElement);
 
   return { renderer, scene };
@@ -213,11 +217,10 @@ export function initCamera(scale: number, x: number, y: number, z: number) {
   const w = window.innerWidth / 2;
   const h = window.innerHeight / 2;
   const near = 0;
-  const far = Number.MAX_VALUE;
+  const far = 5000;
   const camera = new THREE.OrthographicCamera(-w, w, h, -h, near, far);
-
-  camera.position.set(x, y, z).multiplyScalar(scale);
+  camera.position.set(x, y, z);
+  camera.frustumCulled = false;
 
   return camera;
 }
-

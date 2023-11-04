@@ -1,7 +1,9 @@
 import { PointConstructor, SystemAcceleration, Vector3, Vector6 } from "meca3";
+import Orbit from "./Orbit";
 import {
   Body,
   Color,
+  Settings,
   initAxesMesh,
   initBodiesMesh,
   initCamera,
@@ -11,7 +13,6 @@ import {
   initSettingsDom,
   initStats,
   initSystemSimulation,
-  Settings,
   updateAxesMesh,
   updateLightObject,
   updateLinesObject,
@@ -20,9 +21,8 @@ import {
   updateSpheresObject,
 } from "./common";
 import orbits, { OrbitalBody } from "./data";
-import Orbit from "./Orbit";
 
-const BUFFER_LENGTH = 512;
+const BUFFER_LENGTH = 128;
 const SAMPLE_PER_FRAMES = 8192;
 const TARGET_FRAMERATE = 60;
 
@@ -42,6 +42,7 @@ const initOrbitBody =
       color: body.color as unknown as Color,
       trajectoryLength: BUFFER_LENGTH,
       state: Vector6.concatenated(position, speed),
+      isEmissive: body.kind === "Star",
     };
   };
 
@@ -51,6 +52,7 @@ const data = {
     trajectoryLength: BUFFER_LENGTH,
     color: Color.White,
     radius: 10,
+    isEmissive: true,
   },
   points: orbits.map(initOrbitBody(Math.random() * 2 * Math.PI)),
 };
@@ -70,7 +72,7 @@ const gravitationalAcceleration: SystemAcceleration = (p, point) => {
 
 let zoomScale = 1;
 const settings = new Settings({
-  scale: 1e-12,
+  scale: 1e-9,
   speed: SECS_PER_MONTH / TARGET_FRAMERATE,
   samples: SAMPLE_PER_FRAMES,
 });
@@ -92,7 +94,7 @@ function init() {
     ...lines.flat(1),
     ...axes
   );
-  const camera = initCamera(scale, 0, 0, 1e12);
+  const camera = initCamera(scale, 0, 0, 400);
   const controls = initControls(points, settings, camera);
   const dom = initSettingsDom();
 
@@ -101,7 +103,7 @@ function init() {
     updateSimulation(points, barycenter, solver, settings);
     updateLightObject(0, points, barycenter, light, settings);
     updateLinesObject(points, barycenter, lines, settings);
-    updateSpheresObject(points, barycenter, spheres, settings, camera);
+    updateSpheresObject(points, barycenter, spheres, settings);
     updateSettingsDom(dom, settings, points, barycenter, solver.timer);
     zoomScale = updateAxesMesh(camera, axes, zoomScale);
     controls.update();
@@ -114,4 +116,3 @@ function init() {
 
 const animate = init();
 animate();
-

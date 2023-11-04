@@ -166,4 +166,3 @@ const orbits: OrbitalBody[] = [
 ];
 
 export default orbits;
-

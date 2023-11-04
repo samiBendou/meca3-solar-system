@@ -1,7 +1,7 @@
 import { Barycenter, Point, Solver, Timer } from "meca3";
 import * as THREE from "three";
-import { Object3D, OrthographicCamera, Vector3 } from "three";
-import { Duration, UnitPrefix, UNIT_MAP } from "./constants";
+import { Object3D } from "three";
+import { Duration, UNIT_MAP, UnitPrefix } from "./constants";
 import Settings, { Frame } from "./settings";
 import { SettingsDom } from "./types";
 
@@ -117,12 +117,10 @@ export function updateSpheresObject<T extends Object3D>(
   points: Point[],
   barycenter: Barycenter,
   spheres: T[],
-  settings: Settings,
-  camera: THREE.OrthographicCamera
+  settings: Settings
 ) {
   // updating spheres position in sphere according to current position of points in field
   const frame = framePosition(settings.frame, points, barycenter);
-  const cameraPos = camera.position.clone().multiplyScalar(1 / settings.scale);
   [barycenter, ...points].forEach((point, idx) => {
     const sphere = spheres[idx];
     const position = point.position.xyz;
@@ -141,23 +139,37 @@ export function updateLinesObject<T extends Object3D>(
 ) {
   const frame = frameTrajectory(settings.frame, points, barycenter);
   const zero = new THREE.Vector3(0, 0, 0);
+  const direction = new THREE.Vector3();
+  const upVector = new THREE.Vector3(0, 1, 0);
+  const quaternion = new THREE.Quaternion();
+  const frameVector = new THREE.Vector3();
+
   [barycenter, ...points].forEach((point, idx) => {
     const line = lines[idx];
     const trajectory = point.trajectory;
     line.forEach((vertex, vIdx) => {
-      const position = trajectory.get(vIdx).xyz;
+      const previousLine = line[vIdx - 1];
+      const previousVertex = vIdx === 0 ? zero : previousLine.position;
+      const position = trajectory.get(vIdx);
       const pos =
-        frame === null ? zero : new THREE.Vector3(...frame.get(vIdx).xyz);
+        frame === null ? zero : frameVector.set(...frame.get(vIdx).xyz);
+
       vertex.position
-        .set(...position)
+        .set(...position.xyz)
         .sub(pos)
         .multiplyScalar(settings.scale);
+      direction
+        .subVectors(vertex.position, previousVertex)
+        .negate()
+        .normalize();
+      quaternion.setFromUnitVectors(upVector, direction);
+      vertex.setRotationFromQuaternion(quaternion);
     });
   });
 }
 
 export function updateAxesMesh(
-  camera: OrthographicCamera,
+  camera: THREE.OrthographicCamera,
   frame: THREE.Mesh[],
   scaleF: number
 ) {
@@ -187,4 +199,3 @@ export function updateSettingsDom(
   const { value, unit } = makeUnit(200 / settings.scale);
   dom.scale.innerText = `${value.toPrecision(4)} ${unit}m`;
 }
-

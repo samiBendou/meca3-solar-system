@@ -15,6 +15,7 @@ export type SettingsDom = {
 export type Body = {
   radius: number;
   color: Color;
+  isEmissive?: boolean;
 } & Pick<PointConstructor, "trajectoryLength">;
 
 export type SimulationData = {
