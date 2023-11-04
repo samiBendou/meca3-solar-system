@@ -43,6 +43,7 @@ const initOrbitBody =
       trajectoryLength: BUFFER_LENGTH,
       state: Vector6.concatenated(position, speed),
       isEmissive: body.kind === "Star",
+      texture: body.texture,
     };
   };
 

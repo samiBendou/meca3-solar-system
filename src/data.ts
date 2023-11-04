@@ -6,6 +6,7 @@ export type OrbitalBody = {
   mass: number;
   radius: number;
   color: string;
+  texture?: string;
   orbit: OrbitConstructor;
 };
 
@@ -16,6 +17,7 @@ const orbits: OrbitalBody[] = [
     mass: 1.9891e30,
     radius: 6.96342e8,
     color: "#E95700",
+    texture: "static/textures/Sun.jpg",
     orbit: {
       mu: 0.0,
       apoapsis: 0.0,
@@ -33,6 +35,7 @@ const orbits: OrbitalBody[] = [
     mass: 3.3011e23,
     radius: 2.4397e6,
     color: "#876945",
+    texture: "static/textures/Mercury.jpg",
     orbit: {
       mu: 1.3271246205000001e20,
       apoapsis: 6.9817079e10,
@@ -50,6 +53,7 @@ const orbits: OrbitalBody[] = [
     mass: 4.8685e24,
     radius: 6.0518e6,
     color: "#FFFFF1",
+    texture: "static/textures/Venus.jpg",
     orbit: {
       mu: 1.32712764877e20,
       apoapsis: 1.08942109e11,
@@ -67,6 +71,7 @@ const orbits: OrbitalBody[] = [
     mass: 5.9736e24,
     radius: 6.3781e6,
     color: "#195D8D",
+    texture: "static/textures/Earth.jpg",
     orbit: {
       mu: 1.3271283861844181e20,
       apoapsis: 1.52097701e11,
@@ -84,6 +89,7 @@ const orbits: OrbitalBody[] = [
     mass: 6.4185e23,
     radius: 3.3962e6,
     color: "#79392E",
+    texture: "static/textures/Mars.jpg",
     orbit: {
       mu: 1.3271248284637e20,
       apoapsis: 2.4922873e11,
@@ -101,6 +107,7 @@ const orbits: OrbitalBody[] = [
     mass: 1.8986e27,
     radius: 7.1492e7,
     color: "#C28B51",
+    texture: "static/textures/Jupiter.jpg",
     orbit: {
       mu: 1.32839126552e20,
       apoapsis: 8.1662e11,
@@ -118,6 +125,7 @@ const orbits: OrbitalBody[] = [
     mass: 5.6846e26,
     radius: 6.0268e7,
     color: "#D9C2AD",
+    texture: "static/textures/Saturn.jpg",
     orbit: {
       mu: 1.32750371205e20,
       apoapsis: 1.503983449e12,
@@ -135,6 +143,7 @@ const orbits: OrbitalBody[] = [
     mass: 8.681e25,
     radius: 2.5559e7,
     color: "#297D85",
+    texture: "static/textures/Uranus.jpg",
     orbit: {
       mu: 1.32718233957e20,
       apoapsis: 3.006318143e12,
@@ -152,6 +161,7 @@ const orbits: OrbitalBody[] = [
     mass: 1.0243e26,
     radius: 2.4764e7,
     color: "#3E5F9E",
+    texture: "static/textures/Neptune.jpg",
     orbit: {
       mu: 1.3271927654700001e20,
       apoapsis: 4.55394649e12,

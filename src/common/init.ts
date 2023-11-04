@@ -31,6 +31,63 @@ import {
 import Settings from "./settings";
 import { Body, SettingsDom, SimulationData } from "./types";
 
+function componentToHex(c: number) {
+  var hex = c.toString(16);
+  return hex.length == 1 ? "0" + hex : hex;
+}
+
+function rgbToHex(r: number, g: number, b: number) {
+  return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
+}
+
+function getAverageRGB(imgEl: HTMLImageElement) {
+  var blockSize = 100, // only visit every 5 pixels
+    defaultRGB = { r: 0, g: 0, b: 0 }, // for non-supporting envs
+    canvas = document.createElement("canvas"),
+    context = canvas.getContext && canvas.getContext("2d"),
+    data,
+    width,
+    height,
+    i = -4,
+    length,
+    rgb = { r: 0, g: 0, b: 0 },
+    count = 0;
+
+  height = imgEl.naturalHeight || imgEl.offsetHeight || imgEl.height || 1000;
+  width = imgEl.naturalWidth || imgEl.offsetWidth || imgEl.width || 1000;
+
+  if (!context) {
+    return defaultRGB;
+  }
+
+  context.canvas.height = height;
+  context.canvas.width = width;
+
+  context.drawImage(imgEl, 0, 0);
+
+  try {
+    data = context.getImageData(0, 0, width, height);
+  } catch (e) {
+    /* security error, img on diff domain */
+    return defaultRGB;
+  }
+  length = data.data.length;
+
+  while ((i += blockSize * 4) < length) {
+    ++count;
+    rgb.r += data.data[i];
+    rgb.g += data.data[i + 1];
+    rgb.b += data.data[i + 2];
+  }
+
+  // ~~ used to floor values
+  rgb.r = ~~(rgb.r / count);
+  rgb.g = ~~(rgb.g / count);
+  rgb.b = ~~(rgb.b / count);
+
+  return rgb;
+}
+
 function coordinatesFromAxis(axis: Axis, max: number, min: number) {
   const w = axis == Axis.X ? max : min;
   const h = axis == Axis.Y ? max : min;
@@ -83,7 +140,6 @@ export function initLight(point: Body, sphere: THREE.Mesh): THREE.PointLight {
   const color = Color.White;
   const intensity = 2;
   const light = new THREE.PointLight(color, intensity, 0, 0);
-  light.add(sphere);
   return light;
 }
 
@@ -130,14 +186,22 @@ export function initAxesMesh(axes?: Axis[]) {
 export function initSphereMesh(point: Body) {
   const { radius, color } = point;
   const geometry = new THREE.SphereGeometry(radius, 16, 32);
+  console.log(point.texture);
+  const texture = point.texture
+    ? new THREE.TextureLoader().load(point.texture)
+    : undefined;
+  console.log(texture);
   const material = !point.isEmissive
     ? new THREE.MeshLambertMaterial({
-        color,
+        color: texture ? undefined : color,
+        map: texture,
       })
     : new THREE.MeshLambertMaterial({
-        color,
-        emissive: color,
+        color: texture ? undefined : color,
+        emissive: Color.White,
+        emissiveMap: texture,
         emissiveIntensity: 1,
+        map: texture,
       });
 
   return new THREE.Mesh(geometry, material);
@@ -146,18 +210,36 @@ export function initSphereMesh(point: Body) {
 export function initLineMesh(point: Body) {
   const { color, radius, trajectoryLength } = point;
   const geometry = new THREE.CylinderGeometry(radius / 6, radius / 6, 20);
+  const texture = point.texture
+    ? new THREE.ImageLoader().load(point.texture)
+    : undefined;
+  console.log(texture);
+  if (texture && point.texture) {
+    texture.src = point.texture;
+  }
 
-  const meshes = new Array(trajectoryLength).fill(undefined).map(
-    (_, idx) =>
-      new THREE.Mesh(
-        geometry.clone(),
-        new THREE.MeshBasicMaterial({
-          color,
-          transparent: true,
-          opacity: (0.7 * (idx + 1)) / trajectoryLength,
-        })
-      )
-  );
+  const meshes = new Array(trajectoryLength).fill(undefined).map((_, idx) => {
+    return new THREE.Mesh(
+      geometry.clone(),
+      new THREE.MeshBasicMaterial({
+        color,
+        transparent: true,
+        opacity: (0.7 * (idx + 1)) / trajectoryLength,
+      })
+    );
+  });
+  if (texture) {
+    texture.onload = () => {
+      meshes.forEach((mesh) => {
+        const average = texture ? getAverageRGB(texture) : undefined;
+        if (average) {
+          (mesh.material as any)["color"] = new THREE.Color(
+            rgbToHex(average.r, average.g, average.b)
+          );
+        }
+      });
+    };
+  }
   return meshes;
 }
 

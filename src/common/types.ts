@@ -16,6 +16,7 @@ export type Body = {
   radius: number;
   color: Color;
   isEmissive?: boolean;
+  texture?: string;
 } & Pick<PointConstructor, "trajectoryLength">;
 
 export type SimulationData = {
